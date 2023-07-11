@@ -22,13 +22,12 @@ You can test the contract on both goerli testnet or in your local development en
 1. Run ganache and quick start an empty workspace
 1. Tun `truffle deploy` to compile & deploy, or just `truffle test` to compile, deploy and test automatically.
 
-### Test on Goerli
+### Deploy on Goerli
 
 1. Get some funds from the [faucet](https://faucet.goerli.mudit.blog/)
-1. Replace mnemonic in `./scripts/test_goerli.js`
-1. Replace fake data with some real eth2 validator informations
-1. Check if the smart contract address is correct
-1. Run the script with `cd scripts && node test_goerli.js`
+1. Copy and rename `.env.sample` to `.env`
+1. Replace SIGNER_PRIVATE_KEY in `.env`
+1. Run the script with `node scripts/deploy_goerli.js`
 
 ## Functional tests
 
@@ -51,3 +50,6 @@ Refer to https://github.com/crytic/solc-select
 ## Security testing
 
 Refer to https://github.com/crytic/slither
+
+## Deployed contracts:
+* https://goerli.etherscan.io/address/0x0AE83cC1f94b82437Aa4dc0534c23Dc455d92759

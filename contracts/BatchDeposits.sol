@@ -1,23 +1,19 @@
-
-//                                                                           ,,---.
-//                                                                         .-^^,_  `.
-//                                                                    ;`, / 3 ( o\   }
-//         __             __                     ___              __  \  ;   \`, /  ,'
-//        /\ \__         /\ \                  /'___\ __         /\ \ ;_/^`.__.-"  ,'
-//    ____\ \ ,_\    __  \ \ \/'\      __     /\ \__//\_\    ____\ \ \___     `---'
-//   /',__\\ \ \/  /'__`\ \ \ , <    /'__`\   \ \ ,__\/\ \  /',__\\ \  _ `\
-//  /\__, `\\ \ \_/\ \L\.\_\ \ \\`\ /\  __/  __\ \ \_/\ \ \/\__, `\\ \ \ \ \
-//  \/\____/ \ \__\ \__/.\_\\ \_\ \_\ \____\/\_\\ \_\  \ \_\/\____/ \ \_\ \_\
-//   \/___/   \/__/\/__/\/_/ \/_/\/_/\/____/\/_/ \/_/   \/_/\/___/   \/_/\/_/
+//   /$$$$$$$                                            /$$      /$$$$$$   /$$               /$$
+//  | $$__  $$                                          | $$     /$$__  $$ | $$              | $$
+//  | $$  \ $$  /$$$$$$   /$$$$$$$  /$$$$$$  /$$$$$$$  /$$$$$$  | $$  \__//$$$$$$    /$$$$$$ | $$   /$$  /$$$$$$
+//  | $$  | $$ /$$__  $$ /$$_____/ /$$__  $$| $$__  $$|_  $$_/  |  $$$$$$|_  $$_/   |____  $$| $$  /$$/ /$$__  $$
+//  | $$  | $$| $$$$$$$$| $$      | $$$$$$$$| $$  \ $$  | $$     \____  $$ | $$      /$$$$$$$| $$$$$$/ | $$$$$$$$
+//  | $$  | $$| $$_____/| $$      | $$_____/| $$  | $$  | $$ /$$ /$$  \ $$ | $$ /$$ /$$__  $$| $$_  $$ | $$_____/
+//  | $$$$$$$/|  $$$$$$$|  $$$$$$$|  $$$$$$$| $$  | $$  |  $$$$/|  $$$$$$/ |  $$$$/|  $$$$$$$| $$ \  $$|  $$$$$$$
+//  |_______/  \_______/ \_______/ \_______/|__/  |__/   \___/   \______/   \___/   \_______/|__/  \__/ \_______/
 //
-// stakefish Eth2 Batch Deposit contract
+/// @title DecentStake BatchDeposit contract, forked from Stakefish BatchDeposit contract.
 //
 // ### WARNING ###
-// DO NOT USE THIS CONTRACT DIRECTLY. THIS CONTRACT IS ONLY TO BE USED 
-// BY STAKING VIA stakefish's WEBSITE LOCATED AT: https://stake.fish
+// YOU MUST ONLY INTERACT WITH THIS CONTRACT VIA DECENTSTAKE WEBSITE.
 //
-// This contract allows deposit of multiple validators in one transaction
-// and also collects the validator service fee for stakefish
+// This contract allows deposit of up to 100 validators in one transaction
+// and also collects the validator service fee for DecentStake
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -60,7 +56,6 @@ interface IDepositContract {
     function get_deposit_count() external view returns (bytes memory);
 }
 
-
 contract BatchDeposit is Pausable, Ownable {
     using SafeMath for uint256;
 
@@ -88,33 +83,56 @@ contract BatchDeposit is Pausable, Ownable {
      * @dev Performs a batch deposit, asking for an additional fee payment.
      */
     function batchDeposit(
-        bytes calldata pubkeys, 
-        bytes calldata withdrawal_credentials, 
-        bytes calldata signatures, 
+        bytes calldata pubkeys,
+        bytes calldata withdrawal_credentials,
+        bytes calldata signatures,
         bytes32[] calldata deposit_data_roots
-    ) 
-        external payable whenNotPaused 
-    {
+    ) external payable whenNotPaused {
         // sanity checks
-        require(msg.value % 1 gwei == 0, "BatchDeposit: Deposit value not multiple of GWEI");
+        require(
+            msg.value % 1 gwei == 0,
+            "BatchDeposit: Deposit value not multiple of GWEI"
+        );
         require(msg.value >= DEPOSIT_AMOUNT, "BatchDeposit: Amount is too low");
 
         uint256 count = deposit_data_roots.length;
-        require(count > 0, "BatchDeposit: You should deposit at least one validator");
-        require(count <= MAX_VALIDATORS, "BatchDeposit: You can deposit max 100 validators at a time");
+        require(
+            count > 0,
+            "BatchDeposit: You should deposit at least one validator"
+        );
+        require(
+            count <= MAX_VALIDATORS,
+            "BatchDeposit: You can deposit max 100 validators at a time"
+        );
 
-        require(pubkeys.length == count * PUBKEY_LENGTH, "BatchDeposit: Pubkey count don't match");
-        require(signatures.length == count * SIGNATURE_LENGTH, "BatchDeposit: Signatures count don't match");
-        require(withdrawal_credentials.length == 1 * CREDENTIALS_LENGTH, "BatchDeposit: Withdrawal Credentials count don't match");
+        require(
+            pubkeys.length == count * PUBKEY_LENGTH,
+            "BatchDeposit: Pubkey count don't match"
+        );
+        require(
+            signatures.length == count * SIGNATURE_LENGTH,
+            "BatchDeposit: Signatures count don't match"
+        );
+        require(
+            withdrawal_credentials.length == 1 * CREDENTIALS_LENGTH,
+            "BatchDeposit: Withdrawal Credentials count don't match"
+        );
 
         uint256 expectedAmount = _fee.add(DEPOSIT_AMOUNT).mul(count);
-        require(msg.value == expectedAmount, "BatchDeposit: Amount is not aligned with pubkeys number");
+        require(
+            msg.value == expectedAmount,
+            "BatchDeposit: Amount is not aligned with pubkeys number"
+        );
 
         emit FeeCollected(msg.sender, _fee.mul(count));
 
         for (uint256 i = 0; i < count; ++i) {
-            bytes memory pubkey = bytes(pubkeys[i*PUBKEY_LENGTH:(i+1)*PUBKEY_LENGTH]);
-            bytes memory signature = bytes(signatures[i*SIGNATURE_LENGTH:(i+1)*SIGNATURE_LENGTH]);
+            bytes memory pubkey = bytes(
+                pubkeys[i * PUBKEY_LENGTH:(i + 1) * PUBKEY_LENGTH]
+            );
+            bytes memory signature = bytes(
+                signatures[i * SIGNATURE_LENGTH:(i + 1) * SIGNATURE_LENGTH]
+            );
 
             IDepositContract(depositContract).deposit{value: DEPOSIT_AMOUNT}(
                 pubkey,
@@ -131,7 +149,7 @@ contract BatchDeposit is Pausable, Ownable {
      * @param receiver The address where all accumulated funds will be transferred to.
      * Can only be called by the current owner.
      */
-    function withdraw(address payable receiver) public onlyOwner {       
+    function withdraw(address payable receiver) public onlyOwner {
         require(receiver != address(0), "You can't burn these eth directly");
 
         uint256 amount = address(this).balance;
@@ -179,7 +197,7 @@ contract BatchDeposit is Pausable, Ownable {
     function fee() public view returns (uint256) {
         return _fee;
     }
-  
+
     /**
      * Disable renunce ownership
      */

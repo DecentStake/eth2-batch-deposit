@@ -1,11 +1,10 @@
-const DepositContract = artifacts.require("DepositContract");
+// eslint-disable-next-line no-undef
 const BatchDeposit = artifacts.require("BatchDeposit");
 
 // 1 gwei
-const initialFee = 1000000000;
+const depositContractAddress = "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b";
+const initialFee = 0;
 
 module.exports = function (deployer) {
-  deployer.deploy(DepositContract).then(function () {
-    return deployer.deploy(BatchDeposit, DepositContract.address, initialFee);
-  });
+	deployer.deploy(BatchDeposit, depositContractAddress, initialFee);
 };
